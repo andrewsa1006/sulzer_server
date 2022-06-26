@@ -5,10 +5,39 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const connection = require("../config/db");
 const logMessage = require("../config/logger");
+const aws = require("aws-sdk");
 
 const secret = process.env.JWT_SECRET;
 
 const Router = express();
+
+let params = {
+  Destination: {
+    CcAddresses: [],
+    ToAddresses: ["andrewsa1006@gmail.com"],
+  },
+  Message: {
+    Body: {
+      Html: {
+        Charset: "UTF-8",
+        Data: 'This message body contains HTML formatting. It can, for example, contain links like this one: <a class="ulink" href="http://docs.aws.amazon.com/ses/latest/DeveloperGuide" target="_blank">Amazon SES Developer Guide</a>.',
+      },
+      Text: {
+        Charset: "UTF-8",
+        Data: "This is the message body in text format.",
+      },
+    },
+    Subject: {
+      Charset: "UTF-8",
+      Data: "Test email",
+    },
+  },
+  ReplyToAddresses: [],
+  ReturnPath: "",
+  ReturnPathArn: "",
+  Source: "sender@example.com",
+  SourceArn: "",
+};
 
 // JWT Utility Functions
 const signToken = (user) => {
@@ -71,6 +100,10 @@ Router.post("/register", (req, res) => {
       const token = signToken(user);
 
       res.status(200).json({ msg: "Registration successful.", token, user });
+      aws.ses.sendEmail(params, function (err, data) {
+        if (err) console.log(err, err.stack); // an error occurred
+        else console.log(data); // successful response
+      });
       logMessage("User Create", `User with email: ${email} created.`);
     }
   );
