@@ -2,63 +2,16 @@
 
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 const connection = require("../config/db");
 const logMessage = require("../config/logger");
-const aws = require("aws-sdk");
-
-const secret = process.env.JWT_SECRET;
+const utilityFunctions = require("../config/utility");
+const fs = require("fs");
+const AWS = require("aws-sdk");
+AWS.config.update({ region: "us-east-1" });
+const ses = new AWS.SES();
+const s3 = new AWS.S3();
 
 const Router = express();
-
-let params = {
-  Destination: {
-    CcAddresses: [],
-    ToAddresses: ["andrewsa1006@gmail.com"],
-  },
-  Message: {
-    Body: {
-      Html: {
-        Charset: "UTF-8",
-        Data: 'This message body contains HTML formatting. It can, for example, contain links like this one: <a class="ulink" href="http://docs.aws.amazon.com/ses/latest/DeveloperGuide" target="_blank">Amazon SES Developer Guide</a>.',
-      },
-      Text: {
-        Charset: "UTF-8",
-        Data: "This is the message body in text format.",
-      },
-    },
-    Subject: {
-      Charset: "UTF-8",
-      Data: "Test email",
-    },
-  },
-  ReplyToAddresses: [],
-  ReturnPath: "",
-  ReturnPathArn: "",
-  Source: "sender@example.com",
-  SourceArn: "",
-};
-
-// JWT Utility Functions
-const signToken = (user) => {
-  return jwt.sign({ user: user }, secret);
-};
-
-const verifyToken = (req, res, next) => {
-  const token = req.body.token;
-  jwt.verify(token, secret, (err, decoded) => {
-    if (decoded) {
-      req.body.verifyEmail = decoded.user.email;
-      next();
-    } else {
-      res.json({ status: 401, msg: "Unauthorized" });
-      logMessage(
-        "Unauthorized Access Attempt",
-        `Invalid access attempt on ${req.body.email}. Invalid JWT.`
-      );
-    }
-  });
-};
 
 // @API - REGISTER
 Router.post("/register", (req, res) => {
@@ -86,6 +39,7 @@ Router.post("/register", (req, res) => {
           logMessage("Error", err.message);
           return res.status(400).json({
             msg: "An unexpected error occured. Please try again later or contact support.",
+            err: err.message,
           });
         }
       }
@@ -97,13 +51,16 @@ Router.post("/register", (req, res) => {
         company,
       };
 
-      const token = signToken(user);
+      const token = utilityFunctions.signToken(user);
 
       res.status(200).json({ msg: "Registration successful.", token, user });
-      aws.ses.sendEmail(params, function (err, data) {
-        if (err) console.log(err, err.stack); // an error occurred
-        else console.log(data); // successful response
-      });
+      ses.sendEmail(
+        utilityFunctions.generateParamsForRegisterSES(req),
+        function (err, data) {
+          if (err) console.log(err, err.stack); // an error occurred
+          else console.log(data); // successful response
+        }
+      );
       logMessage("User Create", `User with email: ${email} created.`);
     }
   );
@@ -126,7 +83,7 @@ Router.post("/login", (req, res) => {
           lastName: results[0].last_name,
           company: results[0].company,
         };
-        const token = signToken(user);
+        const token = utilityFunctions.signToken(user);
         res.status(200).json({
           msg: "Success!",
           token,
@@ -140,11 +97,26 @@ Router.post("/login", (req, res) => {
   });
 });
 
+Router.post("/upload", (req, res) => {
+  const { email, data } = req.body;
+
+  if (email) {
+  } else {
+    logMessage(
+      "UNAUTHORIZED UPLOAD ATTEMPT",
+      `Unauthorized attempt to upload pdf from email: ${email}`
+    );
+    res
+      .status(401)
+      .json({ msg: "Unauthorized request. Please sign out and sign back in." });
+  }
+});
+
 // ---------- ALL Subsequent requests will use the token validation middleware ---------- \\
-Router.use(verifyToken);
+Router.use(utilityFunctions.verifyToken);
 
 // @API - EDIT USER
-Router.post("/:id", (req, res) => {
+Router.post("/edit/:id", (req, res) => {
   const { originalEmail, email, firstName, lastName, company, verifyEmail } =
     req.body;
 
@@ -180,7 +152,7 @@ Router.post("/:id", (req, res) => {
             company,
           };
 
-          const token = signToken(user);
+          const token = utilityFunctions.signToken(user);
 
           if (results) {
             return res.status(200).json({
@@ -195,7 +167,7 @@ Router.post("/:id", (req, res) => {
   } else {
     logMessage(
       "UNAUTHORIZED ACCESS ATTEMPT",
-      `Invalid attempt to edit user with email: ${email}`
+      `Unauthorized attempt to edit user with email: ${email}`
     );
 
     res
@@ -205,7 +177,7 @@ Router.post("/:id", (req, res) => {
 });
 
 // @API - DELETE USER
-Router.delete("/:id", (req, res) => {
+Router.delete("/delete/:id", (req, res) => {
   const { originalEmail, email, id } = req.body;
   if (originalEmail === email) {
     let sqlDelete = `DELETE FROM user WHERE id = ?`;
@@ -222,7 +194,7 @@ Router.delete("/:id", (req, res) => {
   } else {
     logMessage(
       "UNAUTHORIZED ACCESS ATTEMPT",
-      `Invalid attempt to delete user with email: ${email}`
+      `Unauthorized attempt to delete user with email: ${email}`
     );
     res
       .status(401)
@@ -230,7 +202,9 @@ Router.delete("/:id", (req, res) => {
   }
 });
 
-// Have this route send an email with a URL to reset password
-Router.post("/:id/reset", (req, res) => {});
+// @API - RESET PASSWORD
+Router.post("/reset/:id", (req, res) => {});
+
+// @API - UPLOAD PDFS TO S3
 
 module.exports = Router;
