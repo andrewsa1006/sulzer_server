@@ -14,7 +14,6 @@ CREATE TABLE IF NOT EXISTS user (
   email varchar(45) NOT NULL,
   password varchar(500) NOT NULL,
   first_name varchar(45) NOT NULL,
-  last_name varchar(45) NOT NULL,
   company varchar(45) NOT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY email_UNIQUE (email)

@@ -73,7 +73,7 @@ Router.post("/login", (req, res) => {
   connection.query(sql, [email], (error, results, fields) => {
     if (error) throw error;
     if (results.length === 0)
-      return res.status(404).json({ msg: "No user found." });
+      return res.status(401).json({ msg: "Invalid email or password" });
     bcrypt.compare(password, results[0].password, (err, success) => {
       if (success) {
         const user = {
@@ -90,7 +90,7 @@ Router.post("/login", (req, res) => {
           user,
         });
       } else {
-        res.status(401).json({ msg: "Incorrect password" });
+        res.status(401).json({ msg: "Invalid email or password" });
         logMessage("Error", `Invalid login attempt for ${email}`);
       }
     });
@@ -98,9 +98,39 @@ Router.post("/login", (req, res) => {
 });
 
 Router.post("/upload", (req, res) => {
-  const { email, data } = req.body;
+  const user = {
+    id: req.body.id,
+    email: req.body.email,
+    firstName: req.body.firstName,
+    company: req.body.company,
+  };
 
-  if (email) {
+  const formData = {
+    value1: req.body.value1,
+    value2: req.body.value2,
+    value3: req.body.value3,
+    dropdown1: req.body.dropdown1,
+    dropdown2: req.body.dropdown2,
+    files: req.files?.pdfs,
+  };
+
+  if (user.email) {
+    ses.sendRawEmail(
+      {
+        RawMessage: {
+          Data: utilityFunctions
+            .generateEmailWithPDFAttachment(user, formData)
+            .toString(),
+        },
+      },
+      (err, sesdata, response) => {
+        if (err) console.log(err);
+        if (sesdata) {
+          res.status(200).json({ msg: "Request submitted" });
+        }
+        if (response) console.log("response ", response);
+      }
+    );
   } else {
     logMessage(
       "UNAUTHORIZED UPLOAD ATTEMPT",
