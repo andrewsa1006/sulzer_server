@@ -55,7 +55,12 @@ Router.post("/register", (req, res) => {
 
       res.status(200).json({ msg: "Registration successful.", token, user });
       ses.sendEmail(
-        utilityFunctions.generateParamsForRegisterSES(req),
+        utilityFunctions.generateParamsForRegisterSES(
+          email,
+          firstName,
+          lastName,
+          company
+        ),
         function (err, data) {
           if (err) console.log(err, err.stack); // an error occurred
           else console.log(data); // successful response
@@ -97,49 +102,9 @@ Router.post("/login", (req, res) => {
   });
 });
 
-Router.post("/upload", (req, res) => {
-  const user = {
-    id: req.body.id,
-    email: req.body.email,
-    firstName: req.body.firstName,
-    company: req.body.company,
-  };
-
-  const formData = {
-    value1: req.body.value1,
-    value2: req.body.value2,
-    value3: req.body.value3,
-    dropdown1: req.body.dropdown1,
-    dropdown2: req.body.dropdown2,
-    files: req.files?.pdfs,
-  };
-
-  if (user.email) {
-    ses.sendRawEmail(
-      {
-        RawMessage: {
-          Data: utilityFunctions
-            .generateEmailWithPDFAttachment(user, formData)
-            .toString(),
-        },
-      },
-      (err, sesdata, response) => {
-        if (err) console.log(err);
-        if (sesdata) {
-          res.status(200).json({ msg: "Request submitted" });
-        }
-        if (response) console.log("response ", response);
-      }
-    );
-  } else {
-    logMessage(
-      "UNAUTHORIZED UPLOAD ATTEMPT",
-      `Unauthorized attempt to upload pdf from email: ${email}`
-    );
-    res
-      .status(401)
-      .json({ msg: "Unauthorized request. Please sign out and sign back in." });
-  }
+// @API - RESET PASSWORD
+Router.post("/request", (req, res) => {
+  const { email } = req.body;
 });
 
 // ---------- ALL Subsequent requests will use the token validation middleware ---------- \\
@@ -232,9 +197,50 @@ Router.delete("/delete/:id", (req, res) => {
   }
 });
 
-// @API - RESET PASSWORD
-Router.post("/reset/:id", (req, res) => {});
+// @API - UPLOAD PDFS AND SEND EMAIL
+Router.post("/upload", (req, res) => {
+  const user = {
+    id: req.body.id,
+    email: req.body.email,
+    firstName: req.body.firstName,
+    company: req.body.company,
+  };
 
-// @API - UPLOAD PDFS TO S3
+  const formData = {
+    value1: req.body.value1,
+    value2: req.body.value2,
+    value3: req.body.value3,
+    dropdown1: req.body.dropdown1,
+    dropdown2: req.body.dropdown2,
+    files: req.files?.pdfs,
+  };
+
+  if (user.email) {
+    ses.sendRawEmail(
+      {
+        RawMessage: {
+          Data: utilityFunctions
+            .generateEmailWithPDFAttachment(user, formData)
+            .toString(),
+        },
+      },
+      (err, sesdata, response) => {
+        if (err) console.log(err);
+        if (sesdata) {
+          res.status(200).json({ msg: "Request submitted" });
+        }
+        if (response) console.log("response ", response);
+      }
+    );
+  } else {
+    logMessage(
+      "UNAUTHORIZED UPLOAD ATTEMPT",
+      `Unauthorized attempt to upload pdf from email: ${email}`
+    );
+    res
+      .status(401)
+      .json({ msg: "Unauthorized request. Please sign out and sign back in." });
+  }
+});
 
 module.exports = Router;
