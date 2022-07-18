@@ -1,5 +1,4 @@
 // TODO - Additional Error handling for cases like duplicate user, DB constraints, the like
-
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const connection = require("../config/db");
@@ -9,7 +8,8 @@ const fs = require("fs");
 const AWS = require("aws-sdk");
 AWS.config.update({ region: "us-east-1" });
 const ses = new AWS.SES();
-const s3 = new AWS.S3();
+const axios = require("axios");
+const { verifyTokenWithExp } = require("../config/utility");
 
 const Router = express();
 
@@ -31,6 +31,7 @@ Router.post("/register", (req, res) => {
       lastName.toString(),
       company.toString(),
     ],
+
     (err, results, fields) => {
       if (err) {
         if (err.code === "ER_DUP_ENTRY") {
@@ -75,10 +76,13 @@ Router.post("/register", (req, res) => {
 Router.post("/login", (req, res) => {
   const { email, password } = req.body;
   let sql = `SELECT * FROM user WHERE email = ?`;
+
   connection.query(sql, [email], (error, results, fields) => {
     if (error) throw error;
+
     if (results.length === 0)
       return res.status(401).json({ msg: "Invalid email or password" });
+
     bcrypt.compare(password, results[0].password, (err, success) => {
       if (success) {
         const user = {
@@ -102,13 +106,65 @@ Router.post("/login", (req, res) => {
   });
 });
 
-// @API - RESET PASSWORD
+// @API - REQUEST PASSWORD RESET EMAIL
 Router.post("/request", (req, res) => {
-  const { email } = req.body;
+  const { email, firstName, lastName, company } = req.body;
+  let sql = `SELECT email, first_name FROM user WHERE email = ? AND first_name = ? AND last_name = ? AND company = ?`;
+  connection.query(
+    sql,
+    [email, firstName, lastName, company],
+    (err, results) => {
+      if (err) {
+        console.log(err);
+      } else {
+        if (results.length > 0) {
+          const user = results[0];
+
+          const token = utilityFunctions.signTokenWithExp(user);
+
+          const base64Token = Buffer.from(token, "utf-8").toString();
+          console.log(base64Token);
+
+          let URI =
+            "https://localhost:5000/api/user/reset?token=" + base64Token;
+
+          ses.sendEmail(
+            utilityFunctions.generateParamsForPWReset(user, URI),
+            function (err, data) {
+              if (err) console.log(err, err.stack); // an error occurred
+              else console.log(data); // successful response
+            }
+          );
+        }
+      }
+    }
+  );
+
+  res.status(200).json({ msg: "Password reset email sent." });
 });
 
 // ---------- ALL Subsequent requests will use the token validation middleware ---------- \\
 Router.use(utilityFunctions.verifyToken);
+
+// @API - RESET PASSWORD
+Router.get("/reset", (req, res) => {
+  res.status(200);
+});
+
+Router.post("/reset", (req, res) => {
+  const { verifyEmail, newPassword } = req.body;
+  let passwordAsString = newPassword.toString();
+  const salt = bcrypt.genSaltSync(10);
+  const passwordHash = bcrypt.hashSync(passwordAsString, salt);
+
+  let sql = `UPDATE user SET password = ? WHERE email = ?`;
+
+  connection.query(sql, [verifyEmail, passwordHash], (err, results) => {
+    if (err) console.log(err);
+    console.log(results);
+    res.sendStatus(200);
+  });
+});
 
 // @API - EDIT USER
 Router.post("/edit/:id", (req, res) => {
@@ -215,7 +271,7 @@ Router.post("/upload", (req, res) => {
     files: req.files?.pdfs,
   };
 
-  if (user.email) {
+  if (user?.email) {
     ses.sendRawEmail(
       {
         RawMessage: {

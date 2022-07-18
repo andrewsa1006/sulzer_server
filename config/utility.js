@@ -1,6 +1,9 @@
+// TODO - Prepare for production by changing the TO addresses in the email generation
+
 const jwt = require("jsonwebtoken");
 const mimemessage = require("mimemessage");
 const fs = require("fs");
+const logMessage = require("./logger");
 
 const secret = process.env.JWT_SECRET;
 
@@ -43,7 +46,8 @@ const utilityFunctions = {
   },
 
   // GENERATE PARAMS FOR PASSWORD RESET EMAIL FOR SES
-  generateParamsForPWReset: (email, url) => {
+  generateParamsForPWReset: (user, uri) => {
+    let { email, first_name } = user;
     let params = {
       Destination: {
         ToAddresses: ["andrewsa1006@gmail.com"],
@@ -56,10 +60,11 @@ const utilityFunctions = {
             <html>
               <head></head>
               <body>
-                <h2>User sign up notification</h2> 
-                <h4>${email}</h4>
-                <h5>${firstName} ${lastName} with ${company} has just registered for a new account.</h5>
+                <h2>Password Reset Email</h2> 
+                <h2>Hello ${first_name}</h2>
+                <h3>Please use the below link to reset your password. This link will expire in 15 minutes. If you did not make this request, please ignore this email and reach out to support@support.com</h3>
                 <br>
+                <p>${uri}</p>
                 <br>
                 <p>This is an automated message sent from an unmonitored mailbox. Please do not respond.</p>
                </body>
@@ -68,7 +73,7 @@ const utilityFunctions = {
         },
         Subject: {
           Charset: "UTF-8",
-          Data: `${email} Sign Up`,
+          Data: `Password reset for ${email}`,
         },
       },
       Source: "andrewsiftco@gmail.com",
@@ -141,21 +146,28 @@ const utilityFunctions = {
 
   // CREATE JWT AND RETURN TO USER
   signToken: (user) => {
-    return jwt.sign({ user: user }, secret);
+    return jwt.sign({ user }, secret);
+  },
+
+  signTokenWithExp: (user) => {
+    return jwt.sign({ user }, secret, { expiresIn: 60 * 15 });
   },
 
   // VERIFY JWT IS VALID
   verifyToken: (req, res, next) => {
-    const token = req.body.token;
+    const token = req.query.token || req.body.token;
     jwt.verify(token, secret, (err, decoded) => {
       if (decoded) {
         req.body.verifyEmail = decoded.user.email;
+        req.body.claim = decoded.claim;
         next();
       } else {
         res.json({ status: 401, msg: "Unauthorized" });
         logMessage(
           "Unauthorized Access Attempt",
-          `Invalid access attempt on ${req.body.email}. Invalid JWT.`
+          `Invalid access attempt on ${req.body.email}. ${
+            err ? err.message.toUpperCase() : "Somethng went wrong."
+          }.`
         );
       }
     });
