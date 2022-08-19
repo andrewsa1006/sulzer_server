@@ -13,6 +13,11 @@ const { verifyTokenWithExp } = require("../config/utility");
 
 const Router = express();
 
+Router.get("/test", (req, res) => {
+  console.log("Test Sucessful");
+  res.json({ msg: "Test successful" });
+});
+
 // @API - REGISTER
 Router.post("/register", (req, res) => {
   const { email, password, firstName, lastName, company } = req.body;
@@ -24,13 +29,7 @@ Router.post("/register", (req, res) => {
   let sql = `INSERT INTO user (email, password, first_name, last_name, company) VALUES (?, ?, ?, ?, ?)`;
   connection.query(
     sql,
-    [
-      email.toString(),
-      passwordHash,
-      firstName.toString(),
-      lastName.toString(),
-      company.toString(),
-    ],
+    [email.toString(), passwordHash, firstName.toString(), lastName.toString(), company.toString()],
 
     (err, results, fields) => {
       if (err) {
@@ -55,18 +54,10 @@ Router.post("/register", (req, res) => {
       const token = utilityFunctions.signToken(user);
 
       res.status(200).json({ msg: "Registration successful.", token, user });
-      ses.sendEmail(
-        utilityFunctions.generateParamsForRegisterSES(
-          email,
-          firstName,
-          lastName,
-          company
-        ),
-        function (err, data) {
-          if (err) console.log(err, err.stack); // an error occurred
-          else console.log(data); // successful response
-        }
-      );
+      ses.sendEmail(utilityFunctions.generateParamsForRegisterSES(email, firstName, lastName, company), function (err, data) {
+        if (err) console.log(err, err.stack); // an error occurred
+        else console.log(data); // successful response
+      });
       logMessage("User Create", `User with email: ${email} created.`);
     }
   );
@@ -80,8 +71,7 @@ Router.post("/login", (req, res) => {
   connection.query(sql, [email], (error, results, fields) => {
     if (error) throw error;
 
-    if (results.length === 0)
-      return res.status(401).json({ msg: "Invalid email or password" });
+    if (results.length === 0) return res.status(401).json({ msg: "Invalid email or password" });
 
     bcrypt.compare(password, results[0].password, (err, success) => {
       if (success) {
@@ -110,35 +100,27 @@ Router.post("/login", (req, res) => {
 Router.post("/request", (req, res) => {
   const { email, firstName, lastName, company } = req.body;
   let sql = `SELECT email, first_name FROM user WHERE email = ? AND first_name = ? AND last_name = ? AND company = ?`;
-  connection.query(
-    sql,
-    [email, firstName, lastName, company],
-    (err, results) => {
-      if (err) {
-        console.log(err);
-      } else {
-        if (results.length > 0) {
-          const user = results[0];
+  connection.query(sql, [email, firstName, lastName, company], (err, results) => {
+    if (err) {
+      console.log(err);
+    } else {
+      if (results.length > 0) {
+        const user = results[0];
 
-          const token = utilityFunctions.signTokenWithExp(user);
+        const token = utilityFunctions.signTokenWithExp(user);
 
-          const base64Token = Buffer.from(token, "utf-8").toString();
-          console.log(base64Token);
+        const base64Token = Buffer.from(token, "utf-8").toString();
+        console.log(base64Token);
 
-          let URI =
-            "https://localhost:5000/api/user/reset?token=" + base64Token;
+        let URI = "https://localhost:5000/api/user/reset?token=" + base64Token;
 
-          ses.sendEmail(
-            utilityFunctions.generateParamsForPWReset(user, URI),
-            function (err, data) {
-              if (err) console.log(err, err.stack); // an error occurred
-              else console.log(data); // successful response
-            }
-          );
-        }
+        ses.sendEmail(utilityFunctions.generateParamsForPWReset(user, URI), function (err, data) {
+          if (err) console.log(err, err.stack); // an error occurred
+          else console.log(data); // successful response
+        });
       }
     }
-  );
+  });
 
   res.status(200).json({ msg: "Password reset email sent." });
 });
@@ -168,8 +150,7 @@ Router.post("/reset", (req, res) => {
 
 // @API - EDIT USER
 Router.post("/edit/:id", (req, res) => {
-  const { originalEmail, email, firstName, lastName, company, verifyEmail } =
-    req.body;
+  const { originalEmail, email, firstName, lastName, company, verifyEmail } = req.body;
 
   if (originalEmail === verifyEmail) {
     let sqlSelect = `SELECT id FROM user WHERE email = ?`;
@@ -184,46 +165,37 @@ Router.post("/edit/:id", (req, res) => {
 
       let sqlUpdate = `UPDATE user SET email = ?, first_name = ?, last_name = ?, company = ? WHERE id = ?`;
 
-      connection.query(
-        sqlUpdate,
-        [email, firstName, lastName, company, id],
-        (error, results, fields) => {
-          if (error) {
-            logMessage("Error", error.message);
-            return res.status(500).json({
-              msg: "Error updating user. Please try again later.",
-            });
-          }
-
-          const user = {
-            id,
-            email,
-            firstName,
-            lastName,
-            company,
-          };
-
-          const token = utilityFunctions.signToken(user);
-
-          if (results) {
-            return res.status(200).json({
-              msg: "Successfully updated user information.",
-              token,
-              user,
-            });
-          }
+      connection.query(sqlUpdate, [email, firstName, lastName, company, id], (error, results, fields) => {
+        if (error) {
+          logMessage("Error", error.message);
+          return res.status(500).json({
+            msg: "Error updating user. Please try again later.",
+          });
         }
-      );
+
+        const user = {
+          id,
+          email,
+          firstName,
+          lastName,
+          company,
+        };
+
+        const token = utilityFunctions.signToken(user);
+
+        if (results) {
+          return res.status(200).json({
+            msg: "Successfully updated user information.",
+            token,
+            user,
+          });
+        }
+      });
     });
   } else {
-    logMessage(
-      "UNAUTHORIZED ACCESS ATTEMPT",
-      `Unauthorized attempt to edit user with email: ${email}`
-    );
+    logMessage("UNAUTHORIZED ACCESS ATTEMPT", `Unauthorized attempt to edit user with email: ${email}`);
 
-    res
-      .status(401)
-      .json({ msg: "Unauthorized request. Please sign out and sign back in." });
+    res.status(401).json({ msg: "Unauthorized request. Please sign out and sign back in." });
   }
 });
 
@@ -236,20 +208,13 @@ Router.delete("/delete/:id", (req, res) => {
     connection.query(sqlDelete, [id], (error, results, fields) => {
       if (error) {
         logMessage("Error", error.message);
-        res
-          .status(500)
-          .json({ msg: `Error removing user with email ${email}` });
+        res.status(500).json({ msg: `Error removing user with email ${email}` });
       }
       res.send(results);
     });
   } else {
-    logMessage(
-      "UNAUTHORIZED ACCESS ATTEMPT",
-      `Unauthorized attempt to delete user with email: ${email}`
-    );
-    res
-      .status(401)
-      .json({ msg: "Unauthorized request. Please sign out and sign back in." });
+    logMessage("UNAUTHORIZED ACCESS ATTEMPT", `Unauthorized attempt to delete user with email: ${email}`);
+    res.status(401).json({ msg: "Unauthorized request. Please sign out and sign back in." });
   }
 });
 
@@ -275,9 +240,7 @@ Router.post("/upload", (req, res) => {
     ses.sendRawEmail(
       {
         RawMessage: {
-          Data: utilityFunctions
-            .generateEmailWithPDFAttachment(user, formData)
-            .toString(),
+          Data: utilityFunctions.generateEmailWithPDFAttachment(user, formData).toString(),
         },
       },
       (err, sesdata, response) => {
@@ -289,13 +252,8 @@ Router.post("/upload", (req, res) => {
       }
     );
   } else {
-    logMessage(
-      "UNAUTHORIZED UPLOAD ATTEMPT",
-      `Unauthorized attempt to upload pdf from email: ${email}`
-    );
-    res
-      .status(401)
-      .json({ msg: "Unauthorized request. Please sign out and sign back in." });
+    logMessage("UNAUTHORIZED UPLOAD ATTEMPT", `Unauthorized attempt to upload pdf from email: ${email}`);
+    res.status(401).json({ msg: "Unauthorized request. Please sign out and sign back in." });
   }
 });
 
