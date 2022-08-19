@@ -26,10 +26,10 @@ Router.post("/register", (req, res) => {
   const salt = bcrypt.genSaltSync(10);
   const passwordHash = bcrypt.hashSync(passwordAsString, salt);
 
-  let sql = `INSERT INTO user (email, password, first_name, last_name, company) VALUES (?, ?, ?, ?, ?)`;
+  let sql = `INSERT INTO user (email, password, first_name, last_name, company) VALUES (?, ?, ?, ?)`;
   connection.query(
     sql,
-    [email.toString(), passwordHash, firstName.toString(), lastName.toString(), company.toString()],
+    [email.toString(), passwordHash, firstName.toString(), company.toString()],
 
     (err, results, fields) => {
       if (err) {
