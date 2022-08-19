@@ -20,13 +20,13 @@ Router.get("/test", (req, res) => {
 
 // @API - REGISTER
 Router.post("/register", (req, res) => {
-  const { email, password, firstName, lastName, company } = req.body;
+  const { email, password, firstName, company } = req.body;
   const passwordAsString = password.toString();
 
   const salt = bcrypt.genSaltSync(10);
   const passwordHash = bcrypt.hashSync(passwordAsString, salt);
 
-  let sql = `INSERT INTO user (email, password, first_name, last_name, company) VALUES (?, ?, ?, ?)`;
+  let sql = `INSERT INTO user (email, password, first_name, company) VALUES (?, ?, ?, ?)`;
   connection.query(
     sql,
     [email.toString(), passwordHash, firstName.toString(), company.toString()],
@@ -47,14 +47,13 @@ Router.post("/register", (req, res) => {
         id: results.insertId,
         email,
         firstName,
-        lastName,
         company,
       };
 
       const token = utilityFunctions.signToken(user);
 
       res.status(200).json({ msg: "Registration successful.", token, user });
-      ses.sendEmail(utilityFunctions.generateParamsForRegisterSES(email, firstName, lastName, company), function (err, data) {
+      ses.sendEmail(utilityFunctions.generateParamsForRegisterSES(email, firstName, company), function (err, data) {
         if (err) console.log(err, err.stack); // an error occurred
         else console.log(data); // successful response
       });
@@ -79,7 +78,6 @@ Router.post("/login", (req, res) => {
           id: results[0].id,
           email: results[0].email,
           firstName: results[0].first_name,
-          lastName: results[0].last_name,
           company: results[0].company,
         };
         const token = utilityFunctions.signToken(user);
@@ -98,9 +96,9 @@ Router.post("/login", (req, res) => {
 
 // @API - REQUEST PASSWORD RESET EMAIL
 Router.post("/request", (req, res) => {
-  const { email, firstName, lastName, company } = req.body;
-  let sql = `SELECT email, first_name FROM user WHERE email = ? AND first_name = ? AND last_name = ? AND company = ?`;
-  connection.query(sql, [email, firstName, lastName, company], (err, results) => {
+  const { email, firstName, company } = req.body;
+  let sql = `SELECT email, first_name FROM user WHERE email = ? AND first_name = ? AND company = ?`;
+  connection.query(sql, [email, firstName, company], (err, results) => {
     if (err) {
       console.log(err);
     } else {
@@ -150,7 +148,7 @@ Router.post("/reset", (req, res) => {
 
 // @API - EDIT USER
 Router.post("/edit/:id", (req, res) => {
-  const { originalEmail, email, firstName, lastName, company, verifyEmail } = req.body;
+  const { originalEmail, email, firstName, company, verifyEmail } = req.body;
 
   if (originalEmail === verifyEmail) {
     let sqlSelect = `SELECT id FROM user WHERE email = ?`;
@@ -163,9 +161,9 @@ Router.post("/edit/:id", (req, res) => {
       }
       let id = results[0].id;
 
-      let sqlUpdate = `UPDATE user SET email = ?, first_name = ?, last_name = ?, company = ? WHERE id = ?`;
+      let sqlUpdate = `UPDATE user SET email = ?, first_name = ?, company = ? WHERE id = ?`;
 
-      connection.query(sqlUpdate, [email, firstName, lastName, company, id], (error, results, fields) => {
+      connection.query(sqlUpdate, [email, firstName, company, id], (error, results, fields) => {
         if (error) {
           logMessage("Error", error.message);
           return res.status(500).json({
@@ -177,7 +175,6 @@ Router.post("/edit/:id", (req, res) => {
           id,
           email,
           firstName,
-          lastName,
           company,
         };
 
