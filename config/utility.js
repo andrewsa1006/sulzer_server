@@ -12,7 +12,7 @@ const utilityFunctions = {
   generateParamsForRegisterSES: (email, firstName, lastName, company) => {
     let params = {
       Destination: {
-        ToAddresses: ["andrewsa1006@gmail.com"],
+        ToAddresses: ["Steve.Keen@Sulzer.com"],
       },
       Message: {
         Body: {
@@ -37,9 +37,8 @@ const utilityFunctions = {
           Data: `${email} Sign Up`,
         },
       },
-      Source: "andrewsiftco@gmail.com",
-      SourceArn:
-        "arn:aws:ses:us-east-1:736572217294:identity/andrewsiftco@gmail.com",
+      Source: "no-reply@jpdistributions.net",
+      SourceArn: "arn:aws:ses:us-east-1:938027577283:identity/jpdistributions.net",
     };
 
     return params;
@@ -50,7 +49,7 @@ const utilityFunctions = {
     let { email, first_name } = user;
     let params = {
       Destination: {
-        ToAddresses: ["andrewsa1006@gmail.com"],
+        ToAddresses: ["Steve.Keen@Sulzer.com"],
       },
       Message: {
         Body: {
@@ -76,9 +75,8 @@ const utilityFunctions = {
           Data: `Password reset for ${email}`,
         },
       },
-      Source: "andrewsiftco@gmail.com",
-      SourceArn:
-        "arn:aws:ses:us-east-1:736572217294:identity/andrewsiftco@gmail.com",
+      Source: "no-reply@jpdistributions.net",
+      SourceArn: "arn:aws:ses:us-east-1:938027577283:identity/jpdistributions.net",
     };
 
     return params;
@@ -97,7 +95,7 @@ const utilityFunctions = {
     });
 
     mailContent.header("From", "Sulzer Notification <andrewsiftco@gmail.com>");
-    mailContent.header("To", "andrewsa1006@gmail.com");
+    mailContent.header("To", "Andrewsa1006@gmail.com");
     mailContent.header("Subject", "New File Upload");
 
     const alternateEntity = mimemessage.factory({
@@ -134,10 +132,7 @@ const utilityFunctions = {
         body: info.toString("base64").replace(/([^\0]{76})/g, "$1\n"),
       });
 
-      attachmentEntity.header(
-        "Content-Disposition",
-        `attachment; filename="${file.name}"`
-      );
+      attachmentEntity.header("Content-Disposition", `attachment; filename="${file.name}"`);
       mailContent.body.push(attachmentEntity);
     });
 
@@ -165,9 +160,7 @@ const utilityFunctions = {
         res.json({ status: 401, msg: "Unauthorized" });
         logMessage(
           "Unauthorized Access Attempt",
-          `Invalid access attempt on ${req.body.email}. ${
-            err ? err.message.toUpperCase() : "Somethng went wrong."
-          }.`
+          `Invalid access attempt on ${req.body.email}. ${err ? err.message.toUpperCase() : "Somethng went wrong."}.`
         );
       }
     });
