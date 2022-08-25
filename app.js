@@ -13,6 +13,10 @@ app.use(express.json());
 
 app.use("/api/user", user);
 
+app.get("/", (req, res) => {
+  res.sendStatus(200);
+});
+
 app.listen(port, () => {
   console.log(`Should be listening on ${port}`);
 });

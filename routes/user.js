@@ -8,15 +8,8 @@ const fs = require("fs");
 const AWS = require("aws-sdk");
 AWS.config.update({ region: "us-east-1" });
 const ses = new AWS.SES();
-const axios = require("axios");
-const { verifyTokenWithExp } = require("../config/utility");
 
 const Router = express();
-
-Router.get("/test", (req, res) => {
-  console.log("Test Sucessful");
-  res.json({ msg: "Test successful" });
-});
 
 // @API - REGISTER
 Router.post("/register", (req, res) => {
