@@ -12,7 +12,7 @@ const utilityFunctions = {
   generateParamsForRegisterSES: (email, firstName, lastName, company) => {
     let params = {
       Destination: {
-        ToAddresses: ["Steve.Keen@Sulzer.com"],
+        ToAddresses: ["andrewsa1006@gmail.com"],
       },
       Message: {
         Body: {
