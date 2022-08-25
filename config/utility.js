@@ -37,8 +37,8 @@ const utilityFunctions = {
           Data: `${email} Sign Up`,
         },
       },
-      Source: "no-reply@jpdistributions.net",
-      SourceArn: "arn:aws:ses:us-east-1:938027577283:identity/jpdistributions.net",
+      Source: "no-reply@jpdistributions.link",
+      SourceArn: "arn:aws:ses:us-east-1:938027577283:identity/jpdistributions.link",
     };
 
     return params;
