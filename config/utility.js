@@ -88,6 +88,7 @@ const utilityFunctions = {
     if (formData.files) {
       filesAsArr = Array.from(formData.files);
     }
+    console.log(filesAsArr);
     const { email, firstName, company } = user;
     const mailContent = mimemessage.factory({
       contentType: "multipart/mixed",
