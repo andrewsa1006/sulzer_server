@@ -94,7 +94,7 @@ const utilityFunctions = {
       body: [],
     });
 
-    mailContent.header("From", "Sulzer Notification <andrewsiftco@gmail.com>");
+    mailContent.header("From", "Sulzer Notification <no-reply@jpdistributions.link>");
     mailContent.header("To", "Andrewsa1006@gmail.com");
     mailContent.header("Subject", "New File Upload");
 
