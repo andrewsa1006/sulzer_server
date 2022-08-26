@@ -118,9 +118,7 @@ Router.post("/request", (req, res) => {
 
 // @API - UPLOAD PDFS AND SEND EMAIL
 Router.post("/upload", (req, res) => {
-  for (const value of req.formData.values()) {
-    console.log(value);
-  }
+  console.log(req.body);
   const user = {
     id: req.body.form.id,
     email: req.body.email,
