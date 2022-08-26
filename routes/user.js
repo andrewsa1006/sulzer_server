@@ -210,8 +210,9 @@ Router.delete("/delete/:id", (req, res) => {
 
 // @API - UPLOAD PDFS AND SEND EMAIL
 Router.post("/upload", (req, res) => {
-  console.log(req.body.formData);
-  console.log(req.headers.user);
+  for (const value of req.formData.values()) {
+    console.log(value);
+  }
   const user = {
     id: req.body.form.id,
     email: req.body.email,
