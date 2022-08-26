@@ -86,10 +86,11 @@ const utilityFunctions = {
   generateEmailWithPDFAttachment: (user, formData) => {
     let filesAsArr = [];
     if (formData.files) {
+      console.log(formData.files.length);
       if (formData.files.length > 1) {
-        filesAsArr = Array.from(formData.files.pdfs);
-      } else {
         filesAsArr.push(formData.files.pdfs);
+      } else {
+        filesAsArr = Array.from(formData.files.pdfs);
       }
     }
     console.log(filesAsArr);
