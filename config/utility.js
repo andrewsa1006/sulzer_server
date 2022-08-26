@@ -150,7 +150,7 @@ const utilityFunctions = {
 
   // VERIFY JWT IS VALID
   verifyToken: (req, res, next) => {
-    const token = req.query.token || req.body.token;
+    const token = req.query.token || req.headers.token || req.body.token;
     jwt.verify(token, secret, (err, decoded) => {
       if (decoded) {
         req.body.verifyEmail = decoded.user.email;
