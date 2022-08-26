@@ -99,7 +99,7 @@ const utilityFunctions = {
       body: [],
     });
 
-    mailContent.header("From", "Sulzer Notification <no-reply@jpdistributions.link>");
+    mailContent.header("From", "JP Distributions Notification <no-reply@jpdistributions.link>");
     mailContent.header("To", "andrewsa1006@gmail.com");
     mailContent.header("Subject", "New File Upload");
 
@@ -116,7 +116,7 @@ const utilityFunctions = {
         <body>
           <h2>New upload from ${firstName} with ${company}</h2> 
           <h4>Email: ${email}</h4>
-          <h4> Project Namet: ${formData.projectName}</h4>
+          <h3> Project Name: ${formData.projectName}</h3>
           <h4> Stars Amount: ${formData.stars}</h4>
           <h4> Type Of Bid: ${formData.typeOfBid}</h4>
           <h5> Additional Comments: ${formData.comments}</h4>
