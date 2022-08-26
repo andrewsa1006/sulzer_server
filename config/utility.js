@@ -90,6 +90,7 @@ const utilityFunctions = {
       if (formData.files.length > 1) {
         filesAsArr.push(formData.files.pdfs);
       } else {
+        console.log(formData.files.length);
         filesAsArr = Array.from(formData.files.pdfs);
       }
     }
