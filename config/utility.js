@@ -111,8 +111,11 @@ const utilityFunctions = {
         <body>
           <h2>New upload from ${firstName} with ${company}</h2> 
           <h4>Email: ${email}</h4>
+          <h4> Project Namet: ${formData.projectName}</h4>
+          <h4> Stars Amount: ${formData.stars}</h4>
+          <h4> Type Of Bid: ${formData.typeOfBid}</h4>
+          <h5> Additional Comments: ${formData.comments}</h4>
           <h5>Please find documents attached.</h5>
-          <h1>${formData.value1}</h1>
           <br>
           <p>This is an automated message sent from an unmonitored mailbox. Please do not respond.</p>
          </body>

@@ -224,8 +224,8 @@ Router.post("/upload", (req, res) => {
     projectName: req.body.projectName,
     typeOfBid: req.body.typeOfBid,
     quotationSelection: req.body.quotationSelection,
-    dropdown2: req.body.dropdown2,
-    files: req.files?.pdfs,
+    comments: req.body.comments,
+    files: req.files,
   };
 
   if (user?.email) {
