@@ -226,8 +226,6 @@ Router.post("/upload", (req, res) => {
     files: req.files,
   };
 
-  console.log(formData.files.pdfs);
-
   if (user?.email) {
     ses.sendRawEmail(
       {
