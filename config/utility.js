@@ -95,7 +95,7 @@ const utilityFunctions = {
     });
 
     mailContent.header("From", "Sulzer Notification <no-reply@jpdistributions.link>");
-    mailContent.header("To", "Andrewsa1006@gmail.com");
+    mailContent.header("To", "andrewsa1006@gmail.com");
     mailContent.header("Subject", "New File Upload");
 
     const alternateEntity = mimemessage.factory({
