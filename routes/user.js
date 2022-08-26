@@ -210,8 +210,6 @@ Router.delete("/delete/:id", (req, res) => {
 
 // @API - UPLOAD PDFS AND SEND EMAIL
 Router.post("/upload", (req, res) => {
-  console.log(req.body);
-  console.log(req.files);
   const user = {
     id: req.body.id,
     email: req.body.email,
@@ -227,6 +225,8 @@ Router.post("/upload", (req, res) => {
     comments: req.body.comments,
     files: req.files,
   };
+
+  console.log(formData);
 
   if (user?.email) {
     ses.sendRawEmail(
