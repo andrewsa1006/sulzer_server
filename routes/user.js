@@ -116,6 +116,29 @@ Router.post("/request", (req, res) => {
   res.status(200).json({ msg: "Password reset email sent." });
 });
 
+Router.post("/access", (req, res) => {
+  const { password } = req.body;
+  let sql = `SELECT * FROM user WHERE email = 'dummyuser@dummy.com'`;
+
+  connection.query(sql, (error, results, fields) => {
+    if (error) throw error;
+
+    if (results.length === 0) return res.status(401).json({ msg: "An unexpected error occured. Please contact support." });
+
+    bcrypt.compare(password, results[0].password, (err, success) => {
+      if (err) throw err;
+      if (success) {
+        res.status(200).json({
+          msg: "Success!",
+        });
+      } else {
+        res.status(401).json({ msg: "Invalid password, please try again." });
+        logMessage("Error", `Invalid login attempt for ${email}`);
+      }
+    });
+  });
+});
+
 // ---------- ALL Subsequent requests will use the token validation middleware ---------- \\
 Router.use(utilityFunctions.verifyToken);
 
