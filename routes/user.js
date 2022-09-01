@@ -117,7 +117,7 @@ Router.post("/request", (req, res) => {
 });
 
 Router.post("/access", (req, res) => {
-  console.log(req.body.password);
+  console.log(req.body);
   const { password } = req.body;
   let sql = `SELECT * FROM user WHERE email = 'dummyuser@dummy.com'`;
 
