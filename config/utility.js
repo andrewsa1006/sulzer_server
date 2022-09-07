@@ -158,6 +158,7 @@ const utilityFunctions = {
 
   // VERIFY JWT IS VALID
   verifyToken: (req, res, next) => {
+    console.log(req.body, req.query, req.headers);
     const token = req.query.token || req.headers.token || req.body.token;
     jwt.verify(token, secret, (err, decoded) => {
       if (decoded) {
