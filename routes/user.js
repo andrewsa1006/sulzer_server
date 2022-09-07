@@ -117,7 +117,6 @@ Router.post("/request", (req, res) => {
 });
 
 Router.post("/access", (req, res) => {
-  console.log(req.body);
   const { password } = req.body;
   let sql = `SELECT * FROM user WHERE email = 'dummyuser@dummy.com'`;
 
@@ -155,7 +154,6 @@ Router.post("/reset", (req, res) => {
 
   connection.query(sql, [verifyEmail, passwordHash], (err, results) => {
     if (err) console.log(err);
-    console.log(results);
     res.sendStatus(200);
   });
 });
@@ -231,7 +229,6 @@ Router.delete("/delete/:id", (req, res) => {
 
 // @API - UPLOAD PDFS AND SEND EMAIL
 Router.post("/upload", (req, res) => {
-  console.log(req.body);
   const user = {
     id: req.body.id,
     email: req.body.email,
